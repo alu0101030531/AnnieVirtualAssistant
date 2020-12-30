@@ -2,26 +2,29 @@
 import speech_recognition as sr
 import warnings
 
-warning.filterwarnings('ignore')
+warnings.filterwarnings('ignore')
 
 class AudioManager:
-    def listenAudio(self):
+
+    def recordAudio(self):
         recognizer = sr.Recognizer();
         with sr.Microphone() as source:
             print('Say something')
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source)
         try:
-            list = recognizer.recognize_google(audio,show_all=True)                  # generate a list of possible transcriptions
-            list.popitem()
             data = ''
+            list = recognizer.recognize_google(audio,show_all=False)                  # generate a list of possible transcriptions
+           # list.poptem()
+            data = list
+            print(list)
             ################### debug ###############
-            print("Possible transcriptions:")
-            for prediction, value in list.items():
+            #print("Possible transcriptions:")
+            #for prediction, value in list.items():
                  #print(prediction, value)
-                 data = value
-                 for transciption in value:
-                     print(transciption["transcript"])
+            #     data = value
+            #     for transciption in value:
+            #         print(transciption["transcript"])
             ##########################################
         except KeyError:
             print('I could not understand')
