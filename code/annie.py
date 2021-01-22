@@ -1,15 +1,15 @@
 #import libraries
 import os
-from gtts import gTTS
 import datetime
 import warnings
 import calendar
 import random 
 import wikipedia
-import audio_manager as Audio
-import input_manager as Parser
 import geocoder
 import requests, json
+import pyttsx3
+import audio_manager as Audio
+import input_manager as Parser
 
 warnings.filterwarnings('ignore')
 
@@ -18,6 +18,7 @@ class Annie:
 
 
     def __init__(self):
+        self.engine = pyttsx3.init()
         self.audio = Audio.AudioManager()
         self.parser = Parser.InputManager()
         self.name = 'user'
@@ -33,11 +34,13 @@ class Annie:
         }
 
     def assistantResponse(self, text):
-        myobj = gTTS(text=text, lang='en', slow=False)
-        myobj.save('response.mp3')
-        os.system('ffplay response.mp3')
+        self.engine.say("la pinga mia pal pussy tuyo")
+        #myobj = gTTS(text=text, lang='en', slow=False)
+        #myobj.save('response.mp3')
+        #os.system('ffplay response.mp3')
 
     def parseInput(self):
+        self.engine.say("la pinga mia pal pussy tuyo")
         audio = self.audio.recordAudio()
         while self.parser.parse(self.regexFunction["exit"], audio) == None:
             if self.parser.parse(self.regexFunction["good morning"], audio):

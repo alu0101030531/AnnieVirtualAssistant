@@ -33,4 +33,3 @@ class AudioManager:
         except sr.RequestError as e:
             print('Request error from google speech recognition' + format(e))
         return data
-        
