@@ -6,23 +6,21 @@ import calendar
 import random 
 import wikipedia
 import geocoder
+import speech_recognition as sr
 import requests, json
 import pyttsx3
-import audio_manager as Audio
+# import audio_manager as Audio
 import input_manager as Parser
 
 warnings.filterwarnings('ignore')
 
 
 class Annie:
-
-
     def __init__(self):
         self.engine = pyttsx3.init()
         voices = self.engine.getProperty('voices')
         self.engine.setProperty('voice', voices[1].id)
         self.engine.runAndWait()
-        self.audio = Audio.AudioManager()
         self.parser = Parser.InputManager()
         self.name = 'user'
         self.weatherKey = 'de2411c4d0cdca5f3f257bc5bf135675'
@@ -34,6 +32,22 @@ class Annie:
             'exit' : 'exit.*|bye.*|bye bye.*|see you.*',
             'weather': '.*weather.*'
         }
+
+    def recordAudio(self):
+        recognizer = sr.Recognizer();
+        with sr.Microphone() as source:
+            print('Say something')
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source)
+        try:
+            phrase = recognizer.recognize_google(audio, show_all=False)  # generate a list of possible transcriptions
+        except KeyError:
+            print('I could not understand')
+        except sr.UnknownValueError:
+            print('I could not understand')
+        except sr.RequestError as e:
+            print('Request error from google speech recognition' + format(e))
+        return str(phrase)
 
     def assistantResponse(self, text):
         self.engine.say(text)
