@@ -19,6 +19,8 @@ class Annie:
 
     def __init__(self):
         self.engine = pyttsx3.init()
+        voices = self.engine.getProperty('voices')
+        self.engine.setProperty('voice', voices[1].id)
         self.audio = Audio.AudioManager()
         self.parser = Parser.InputManager()
         self.name = 'user'
@@ -34,24 +36,22 @@ class Annie:
         }
 
     def assistantResponse(self, text):
-        self.engine.say("la pinga mia pal pussy tuyo")
-        #myobj = gTTS(text=text, lang='en', slow=False)
-        #myobj.save('response.mp3')
-        #os.system('ffplay response.mp3')
+        self.engine.say(text)
+        self.engine.runAndWait()
 
     def parseInput(self):
-        self.engine.say("la pinga mia pal pussy tuyo")
         audio = self.audio.recordAudio()
-        while self.parser.parse(self.regexFunction["exit"], audio) == None:
-            if self.parser.parse(self.regexFunction["good morning"], audio):
-                self.assistantResponse('Good morning ' + self.name)
-            elif self.parser.parse(self.regexFunction["my name"], audio):
-                self.name = audio.split()[-1]
-                self.assistantResponse('Hi ' + self.name)
-            elif self.parser.parse(self.regexFunction["weather"], audio):
-                location = geocoder.ip('me')
-                self.weather(location.city)
-            audio = self.audio.recordAudio() 
+        # Todo esto habría que cambiarlo para que se haga con el nltk
+        # while self.parser.parse(self.regexFunction["exit"], audio) is None:
+        #    if self.parser.parse(self.regexFunction["good morning"], audio):
+        #        self.assistantResponse('Good morning ' + self.name)
+        #    elif self.parser.parse(self.regexFunction["my name"], audio):
+        #        self.name = audio.split()[-1]
+        #        self.assistantResponse('Hi ' + self.name)
+        #    elif self.parser.parse(self.regexFunction["weather"], audio):
+        #        location = geocoder.ip('me')
+        #        self.weather(location.city)
+        #    audio = self.audio.recordAudio()
 
     def weather(self, city):
         # complete url address 
