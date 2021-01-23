@@ -1,5 +1,4 @@
-#import libraries
-import os
+# import libraries
 import datetime
 import warnings
 import calendar
@@ -9,8 +8,17 @@ import geocoder
 import speech_recognition as sr
 import requests, json
 import pyttsx3
-# import audio_manager as Audio
-import input_manager as Parser
+import nltk, re, pprint
+from nltk.corpus import stopwords
+from nltk import WordNetLemmatizer
+from nltk.stem import SnowballStemmer
+# nltk.download('words') # Descomenta esto para que se descargue
+# nltk.download('punkt')
+# nltk.download('stopwords')
+# nltk.download('averaged_perceptron_tagger')
+# nltk.download('maxent_ne_chunker')
+# nltk.download('wordnet')
+import input_manager as parser
 
 warnings.filterwarnings('ignore')
 
@@ -18,28 +26,27 @@ warnings.filterwarnings('ignore')
 class Annie:
     def __init__(self):
         self.engine = pyttsx3.init()
-        voices = self.engine.getProperty('voices')
-        self.engine.setProperty('voice', voices[1].id)
-        self.engine.runAndWait()
-        self.parser = Parser.InputManager()
+        self.__setEngine()
+        self.parser = parser.InputManager()
         self.name = 'user'
         self.weatherKey = 'de2411c4d0cdca5f3f257bc5bf135675'
         self.weatherUrl = "http://api.openweathermap.org/data/2.5/weather?"
-        self.regexFunction = {
-            'greet' : "(hello|hi|hey) (Annie|any)",
-            'good morning' : 'good morning (Annie|any)|good morning',
-            'my name' : 'my name is [A-Za-z]+$',
-            'exit' : 'exit.*|bye.*|bye bye.*|see you.*',
-            'weather': '.*weather.*'
-        }
 
+    # Sets the gtts voice and run the engine
+    def __setEngine(self):
+        voices = self.engine.getProperty('voices')
+        self.engine.setProperty('voice', voices[1].id)
+        self.engine.runAndWait()
+
+    # Starts the recording of audio and return the phrase the user said
     def recordAudio(self):
-        recognizer = sr.Recognizer();
+        recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             print('Say something')
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source)
         try:
+            phrase = ''
             phrase = recognizer.recognize_google(audio, show_all=False)  # generate a list of possible transcriptions
         except KeyError:
             print('I could not understand')
@@ -49,6 +56,7 @@ class Annie:
             print('Request error from google speech recognition' + format(e))
         return str(phrase)
 
+    # Play Annie response
     def assistantResponse(self, text):
         self.engine.say(text)
         self.engine.runAndWait()
@@ -66,6 +74,18 @@ class Annie:
         #        location = geocoder.ip('me')
         #        self.weather(location.city)
         #    audio = self.audio.recordAudio()
+
+    def tokenizeAndChunk(self, phrase):
+        tokens = nltk.word_tokenize(phrase)  # Separamos la frase por palabras
+        stop_words = set(stopwords.words('english'))
+        clean_tokens = [w for w in tokens if not w in stop_words]  # le quitamos las palabras sin significado semántico 'a' 'the' 'is'
+        lemmatization = []
+        lemma = WordNetLemmatizer()
+        for w in clean_tokens:
+            lemmatization.append(lemma.lemmatize(w))
+        tagged = nltk.pos_tag(lemmatization)  # las clasificamos por verbo, sustantivo...
+        test = nltk.ne_chunk(tagged)  # Comprueba si hay nombres propios, de ciudades...
+        test.draw()
 
     def weather(self, city):
         # complete url address 
@@ -114,13 +134,13 @@ class Annie:
       
             # print following values 
             self.assistantResponse(" Temperature is " +
-                            str(current_temperature) + 
-                  "\n atmospheric pressure is " +
-                            str(current_pressure) +
-                  "\n humidity is " +
-                            str(current_humidiy) +
-                  "\n Today the weather is " +
-                            str(weather_description)) 
+                                   str(current_temperature) +
+                                   "\n atmospheric pressure is " +
+                                   str(current_pressure) +
+                                   "\n humidity is " +
+                                   str(current_humidiy) +
+                                   "\n Today the weather is " +
+                                   str(weather_description))
           
         else: 
             self.assistantResponse(" City Not Found ") 

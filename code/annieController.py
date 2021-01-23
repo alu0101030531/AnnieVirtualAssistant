@@ -1,6 +1,6 @@
 from annie import Annie
 
-endPhrases = ['bye bye', 'exit', 'bye', 'see you']
+exitPhrases = ['bye bye', 'exit', 'bye', 'see you']
 
 
 # This class manages the flow of execution of the Annie methods
@@ -8,10 +8,12 @@ class AnnieController:
     def __init__(self):
         self.annie = Annie()
 
-    # Start the execution loop
+    # Starts the execution loop
     def play(self):
         phrase = self.annie.recordAudio()
-        while phrase not in endPhrases:
+        while phrase not in exitPhrases:
             self.annie.assistantResponse(phrase)
-            phrase = self.annie.recordAudio()
             print(phrase)
+            print("")
+            self.annie.tokenizeAndChunk(phrase)
+            phrase = self.annie.recordAudio()
