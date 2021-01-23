@@ -21,6 +21,7 @@ class Annie:
         self.engine = pyttsx3.init()
         voices = self.engine.getProperty('voices')
         self.engine.setProperty('voice', voices[1].id)
+        self.engine.runAndWait()
         self.audio = Audio.AudioManager()
         self.parser = Parser.InputManager()
         self.name = 'user'
@@ -32,7 +33,6 @@ class Annie:
             'my name' : 'my name is [A-Za-z]+$',
             'exit' : 'exit.*|bye.*|bye bye.*|see you.*',
             'weather': '.*weather.*'
-
         }
 
     def assistantResponse(self, text):
