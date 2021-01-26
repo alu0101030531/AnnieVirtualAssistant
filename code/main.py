@@ -1,6 +1,4 @@
-import annie as Annie
-import re
+from annieController import AnnieController
 
-annie = Annie.Annie()
-annie.parseInput()
-
+annie = AnnieController()
+annie.play()
