@@ -17,3 +17,4 @@ class AnnieController:
             print("")
             self.annie.tokenizeAndChunk(phrase)
             phrase = self.annie.recordAudio()
+
