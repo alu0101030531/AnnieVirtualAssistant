@@ -23,7 +23,7 @@ import input_manager as parser
 
 warnings.filterwarnings('ignore')
 
-commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"]}
+commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"], "GOOGLE": ["search", "google", "Google"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<NNP>}
              {<VBG><NNP>}
@@ -34,6 +34,11 @@ youtubeGrammar = r"""
              
 """
 
+# Search in google something
+googleGrammar = r"""
+    GOOGLE: {<NN.*><NNP><.*>*}
+            {<NN.*><.*>*<NNP>}
+"""
 
 class Annie:
     def __init__(self):
@@ -41,7 +46,7 @@ class Annie:
         self.__setEngine()
         self.parser = parser.InputManager()
         self.name = 'user'
-        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube}
+        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google}
         self.weather_request = WeatherRequest()
 
     # Sets the gtts voice and run the engine
@@ -82,6 +87,16 @@ class Annie:
         separator = ' '
         pywhatkit.playonyt(separator.join(video))
 
+    def google(self, chunk, keywords):
+        print("Buscando en google")
+        toSearch = []
+        for word in chunk:
+            if word[0] not in commands_key_words["GOOGLE"]:
+                toSearch.append(word[0])
+        separator = ' '
+        pywhatkit.search(separator.join(toSearch))
+
+
     def weather(self, chunk, keywords):
         locations = []
         for word in chunk.subtrees(filter=lambda t: t.label() == 'GPE'):
@@ -100,6 +115,7 @@ class Annie:
             keywords = []
             print(subtree)
             for word in subtree:
+                print(word)
                 if type(word) is tuple:
                     if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
                         keywords.append(word[0])
@@ -117,6 +133,8 @@ class Annie:
         self.checkChunks(weather_chunked, self.ne_chunk(clean_tagged), 'WEATHER', ['NN', 'VBG'])
         youtube_chunked = self.__chunk(clean_tagged, youtubeGrammar)
         self.checkChunks(youtube_chunked, self.ne_chunk(clean_tagged), 'YOUTUBE', ['NN', 'NNP', 'VB'])
+        google_chunked = self.__chunk(clean_tagged, googleGrammar)
+        self.checkChunks(google_chunked, self.ne_chunk(clean_tagged), 'GOOGLE', ['NN', 'NNP', 'NNP'])
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
