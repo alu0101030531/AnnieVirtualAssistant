@@ -20,10 +20,12 @@ import pywhatkit
 # nltk.download('wordnet')
 from weather_request import WeatherRequest
 import input_manager as parser
+import webbrowser as web
 
 warnings.filterwarnings('ignore')
 
-commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"], "GOOGLE": ["search", "google", "Google"]}
+commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
+                      "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<NNP>}
              {<VBG><NNP>}
@@ -36,8 +38,12 @@ youtubeGrammar = r"""
 
 # Search in google something
 googleGrammar = r"""
-    GOOGLE: {<NN.*><NNP><.*>*}
-            {<NN.*><.*>*<NNP>}
+    GOOGLE: {<NN.*><.*>*<NNP>}
+"""
+
+wikipediaGrammar = r"""
+    WIKIPEDIA: {<NN.*><.*>*<NNP>}
+               {<VB.*><.*>*<NNP>}
 """
 
 class Annie:
@@ -46,7 +52,7 @@ class Annie:
         self.__setEngine()
         self.parser = parser.InputManager()
         self.name = 'user'
-        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google}
+        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia}
         self.weather_request = WeatherRequest()
 
     # Sets the gtts voice and run the engine
@@ -96,6 +102,16 @@ class Annie:
         separator = ' '
         pywhatkit.search(separator.join(toSearch))
 
+    def wikipedia(selfself, chunk, keywords):
+        print("Buscando en wikipedia")
+        url = 'https://es.wikipedia.org/wiki/'
+        toSearch = []
+        for word in chunk:
+            if word[0] not in commands_key_words["WIKIPEDIA"]:
+                toSearch.append(word[0])
+        page = wikipedia.page(toSearch)
+        web.open(url + page.title)
+
 
     def weather(self, chunk, keywords):
         locations = []
@@ -135,6 +151,8 @@ class Annie:
         self.checkChunks(youtube_chunked, self.ne_chunk(clean_tagged), 'YOUTUBE', ['NN', 'NNP', 'VB'])
         google_chunked = self.__chunk(clean_tagged, googleGrammar)
         self.checkChunks(google_chunked, self.ne_chunk(clean_tagged), 'GOOGLE', ['NN', 'NNP', 'NNP'])
+        wiki_chunked = self.__chunk(clean_tagged, wikipediaGrammar)
+        self.checkChunks(wiki_chunked, self.ne_chunk(clean_tagged), 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
