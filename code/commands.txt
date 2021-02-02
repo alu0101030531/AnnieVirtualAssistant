@@ -12,10 +12,14 @@ Asking about weather
 
 Finding info in wikipedia
 
+"Look for XXXX in Wikipedia"                [('look', 'NN'), ('Monarchy', 'NNP'), ('Wikipedia', 'NNP')]
+
+/*
 "What is a XXX?"                            [('microphone', 'NN')]
 "Do you know what is XXX?"                  [('know', 'NN'), ("'s", 'POS'), ('table', 'NN')] || [('know', 'VB'), ('microphone', 'NN')]
 "What can you tell me about a? XXXX"        [('tell', 'VB'), ('microphone', 'NN')] || [('tell', 'NN'), ('table', 'NN')]
 "What XXX means"                            [('microphone', 'NN'), ('mean', 'NN')] || [('internet', 'NN'), ('mean', 'NN')]
+*/
 # Palabras clave a buscar
 "mean" "tell" "know" "Palabras a buscar"
 
