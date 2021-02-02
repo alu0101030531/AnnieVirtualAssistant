@@ -79,7 +79,7 @@ class Annie:
 
     def youtube(self, chunk, keywords):
         print("reproducimos video")
-        pywhatkit.playonyt("Mic Drop")
+        pywhatkit.playonyt("Xokas Barraquito")
 
     def weather(self, chunk, keywords):
         locations = []
