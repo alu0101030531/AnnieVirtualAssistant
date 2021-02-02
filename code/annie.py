@@ -23,10 +23,6 @@ import input_manager as parser
 
 warnings.filterwarnings('ignore')
 
-weatherKeyWords = ["temperature", "raining", "weather", "snowing"]
-wikipediaKeyWords = ["mean", "tell", "know"]
-youtubeKeyWords = ["youtube", "play"]
-
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<NNP>}
@@ -34,7 +30,7 @@ weatherGrammar = r"""
 """
 youtubeGrammar = r"""
     YOUTUBE: {<NN.*><NNP><.*>*}
-             {<NN|VB.*><.*>*<VBP|NN>}
+             {<NN.*|VB.*><.*>*<VBP|NN>}
              
 """
 
@@ -79,7 +75,12 @@ class Annie:
 
     def youtube(self, chunk, keywords):
         print("reproducimos video")
-        pywhatkit.playonyt("Xokas Barraquito")
+        video = []
+        for word in chunk:
+            if word[0] not in commands_key_words["YOUTUBE"]:
+                video.append(word[0])
+        separator = ' '
+        pywhatkit.playonyt(separator.join(video))
 
     def weather(self, chunk, keywords):
         locations = []
