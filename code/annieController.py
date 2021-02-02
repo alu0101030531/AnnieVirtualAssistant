@@ -11,9 +11,6 @@ class AnnieController:
     # Starts the execution loop
     def play(self):
         phrase = self.annie.recordAudio()
-        while phrase not in exitPhrases:
-            self.annie.assistantResponse(phrase)
-            print(phrase)
-            self.annie.parseInput(phrase)
-            phrase = self.annie.recordAudio()
-
+        self.annie.assistantResponse(phrase)
+        print(phrase)
+        self.annie.parseInput(phrase)
