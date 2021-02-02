@@ -59,6 +59,7 @@ hourGrammar = r"""
 
 class Annie:
     def __init__(self):
+        self.foundCommand = False
         self.engine = pyttsx3.init()
         self.__setEngine()
         self.parser = parser.InputManager()
@@ -112,6 +113,9 @@ class Annie:
                 toSearch.append(word[0])
         separator = ' '
         pywhatkit.search(separator.join(toSearch))
+
+    def googleDefault(self, phrase):
+        pywhatkit.search(phrase)
 
     def wikipedia(self, chunk, keywords):
         wikipedia.set_lang("en")
@@ -176,9 +180,12 @@ class Annie:
             if not keywords:
                 print("no keywords found")
             if keywords:
-                self.commands[label](subtree, keywords)
+                if not self.foundCommand:
+                    self.commands[label](subtree, keywords)
+                    self.foundCommand = True
 
     def parseInput(self, phrase):
+        self.foundCommand = False
         clean_tagged = self.tokenize(phrase)
         print(clean_tagged)
         weather_chunked = self.__chunk(clean_tagged, weatherGrammar)
@@ -193,6 +200,8 @@ class Annie:
         self.checkChunks(location_chunked, self.ne_chunk(clean_tagged), 'LOCATION', ['NN', 'NNP'])
         hour_chunked = self.__chunk(clean_tagged, hourGrammar)
         self.checkChunks(hour_chunked, self.ne_chunk(clean_tagged), 'HOUR', ['NN'])
+        if not self.foundCommand:
+            self.googleDefault(phrase)
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
@@ -220,3 +229,4 @@ class Annie:
         lemmatisation = self.__lemmatisation(clean_tokens)
         tagged = nltk.pos_tag(lemmatisation)  # las clasificamos por verbo, sustantivo...
         return tagged  # Comprueba si hay nombres propios, de ciudades...
+
