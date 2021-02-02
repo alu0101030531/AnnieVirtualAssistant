@@ -1,3 +1,4 @@
 .idea
 annie
 code/*.pyc
+code/__pycache__/*.pyc
