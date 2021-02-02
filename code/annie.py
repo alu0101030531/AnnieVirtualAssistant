@@ -21,12 +21,14 @@ import pywhatkit
 from weather_request import WeatherRequest
 import input_manager as parser
 import webbrowser as web
+import requests
+from lxml import html
 
 warnings.filterwarnings('ignore')
 
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
                       "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"],
-                      "LOCATION": ["location", "what"]}
+                      "LOCATION": ["location", "what"], "HOUR": ["hour"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<NNP>}
              {<VBG><NNP>}
@@ -51,13 +53,17 @@ locationGrammar = r"""
     LOCATION: {<NN.*><.*>*<NNP|NN>}
 """
 
+hourGrammar = r"""
+    HOUR: {<NN><NNP>}
+"""
+
 class Annie:
     def __init__(self):
         self.engine = pyttsx3.init()
         self.__setEngine()
         self.parser = parser.InputManager()
         self.name = 'user'
-        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia, "LOCATION": self.location}
+        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia, "LOCATION": self.location, "HOUR": self.hour}
         self.weather_request = WeatherRequest()
 
     # Sets the gtts voice and run the engine
@@ -129,6 +135,21 @@ class Annie:
         url = 'https://google.es/maps/place/' + finalLocationsString + '/&amp'
         web.open(url)
 
+    def hour(self, chunk, keywords):
+        country = []
+        for word in chunk:
+            if word[0] not in commands_key_words["HOUR"]:
+                country.append(word[0])
+        hourString = " ".join(country)
+        pageContent = requests.get(
+            'https://www.timeanddate.com/worldclock/' + hourString
+        )
+        tree = html.fromstring(pageContent.content)
+        variable = tree.xpath("/html/body/main/article/section[1]/div[1]/div/span[1]/text()")
+        print(variable)
+        variable = " ".join(variable)
+        variable.replace(':', ' ')
+        self.assistantResponse(variable)
 
     def weather(self, chunk, keywords):
         locations = []
@@ -157,8 +178,6 @@ class Annie:
             if keywords:
                 self.commands[label](subtree, keywords)
 
-
-
     def parseInput(self, phrase):
         clean_tagged = self.tokenize(phrase)
         print(clean_tagged)
@@ -172,6 +191,8 @@ class Annie:
         self.checkChunks(wiki_chunked, self.ne_chunk(clean_tagged), 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
         location_chunked = self.__chunk(clean_tagged, locationGrammar)
         self.checkChunks(location_chunked, self.ne_chunk(clean_tagged), 'LOCATION', ['NN', 'NNP'])
+        hour_chunked = self.__chunk(clean_tagged, hourGrammar)
+        self.checkChunks(hour_chunked, self.ne_chunk(clean_tagged), 'HOUR', ['NN'])
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
