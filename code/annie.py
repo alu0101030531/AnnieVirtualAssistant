@@ -25,7 +25,8 @@ import webbrowser as web
 warnings.filterwarnings('ignore')
 
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
-                      "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"]}
+                      "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"],
+                      "LOCATION": ["location", "what"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<NNP>}
              {<VBG><NNP>}
@@ -46,13 +47,17 @@ wikipediaGrammar = r"""
                {<VB.*><.*>*<NNP>}
 """
 
+locationGrammar = r"""
+    LOCATION: {<NN.*><.*>*<NNP|NN>}
+"""
+
 class Annie:
     def __init__(self):
         self.engine = pyttsx3.init()
         self.__setEngine()
         self.parser = parser.InputManager()
         self.name = 'user'
-        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia}
+        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia, "LOCATION": self.location}
         self.weather_request = WeatherRequest()
 
     # Sets the gtts voice and run the engine
@@ -102,7 +107,7 @@ class Annie:
         separator = ' '
         pywhatkit.search(separator.join(toSearch))
 
-    def wikipedia(selfself, chunk, keywords):
+    def wikipedia(self, chunk, keywords):
         wikipedia.set_lang("en")
         print("Buscando en wikipedia")
         url = 'https://es.wikipedia.org/wiki/'
@@ -114,6 +119,15 @@ class Annie:
         listofelements = wikipedia.search(newsearch)
         page = wikipedia.page(listofelements[0]).url
         web.open(page)
+
+    def location(self, chunk, keywords):
+        location = []
+        for word in chunk:
+            if word[0] not in commands_key_words["LOCATION"]:
+                location.append(word[0])
+        finalLocationsString = " ".join(location)
+        url = 'https://google.es/maps/place/' + finalLocationsString + '/&amp'
+        web.open(url)
 
 
     def weather(self, chunk, keywords):
@@ -156,6 +170,8 @@ class Annie:
         self.checkChunks(google_chunked, self.ne_chunk(clean_tagged), 'GOOGLE', ['NN', 'NNP', 'NNP'])
         wiki_chunked = self.__chunk(clean_tagged, wikipediaGrammar)
         self.checkChunks(wiki_chunked, self.ne_chunk(clean_tagged), 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
+        location_chunked = self.__chunk(clean_tagged, locationGrammar)
+        self.checkChunks(location_chunked, self.ne_chunk(clean_tagged), 'LOCATION', ['NN', 'NNP'])
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
