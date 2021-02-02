@@ -14,7 +14,6 @@ class AnnieController:
         while phrase not in exitPhrases:
             self.annie.assistantResponse(phrase)
             print(phrase)
-            print("")
-            self.annie.tokenizeAndChunk(phrase)
+            self.annie.parseInput(phrase)
             phrase = self.annie.recordAudio()
 

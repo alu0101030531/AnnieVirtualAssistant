@@ -4,7 +4,6 @@ import warnings
 import calendar
 import random
 import wikipedia
-import geocoder
 import speech_recognition as sr
 import requests, json
 import pyttsx3
@@ -12,16 +11,32 @@ import nltk, re, pprint
 from nltk.corpus import stopwords
 from nltk import WordNetLemmatizer
 from nltk.stem import SnowballStemmer
-import spacy
+import pywhatkit
 # nltk.download('words') # Descomenta esto para que se descargue
 # nltk.download('punkt')
 # nltk.download('stopwords')
 # nltk.download('averaged_perceptron_tagger')
 # nltk.download('maxent_ne_chunker')
 # nltk.download('wordnet')
+from weather_request import WeatherRequest
 import input_manager as parser
 
 warnings.filterwarnings('ignore')
+
+weatherKeyWords = ["temperature", "raining", "weather", "snowing"]
+wikipediaKeyWords = ["mean", "tell", "know"]
+youtubeKeyWords = ["youtube", "play"]
+
+commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"]}
+weatherGrammar = r"""
+    WEATHER: {<NN><IN>?<NNP>}
+             {<VBG><NNP>}
+"""
+youtubeGrammar = r"""
+    YOUTUBE: {<NN.*><NNP><.*>*}
+             {<NN|VB.*><.*>*<VBP|NN>}
+             
+"""
 
 
 class Annie:
@@ -30,8 +45,8 @@ class Annie:
         self.__setEngine()
         self.parser = parser.InputManager()
         self.name = 'user'
-        self.weatherKey = 'de2411c4d0cdca5f3f257bc5bf135675'
-        self.weatherUrl = "http://api.openweathermap.org/data/2.5/weather?"
+        self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube}
+        self.weather_request = WeatherRequest()
 
     # Sets the gtts voice and run the engine
     def __setEngine(self):
@@ -62,19 +77,45 @@ class Annie:
         self.engine.say(text)
         self.engine.runAndWait()
 
-    def parseInput(self):
-        audio = self.audio.recordAudio()
-        # Todo esto habría que cambiarlo para que se haga con el nltk
-        # while self.parser.parse(self.regexFunction["exit"], audio) is None:
-        #    if self.parser.parse(self.regexFunction["good morning"], audio):
-        #        self.assistantResponse('Good morning ' + self.name)
-        #    elif self.parser.parse(self.regexFunction["my name"], audio):
-        #        self.name = audio.split()[-1]
-        #        self.assistantResponse('Hi ' + self.name)
-        #    elif self.parser.parse(self.regexFunction["weather"], audio):
-        #        location = geocoder.ip('me')
-        #        self.weather(location.city)
-        #    audio = self.audio.recordAudio()
+    def youtube(self, chunk, keywords):
+        print("reproducimos video")
+        pywhatkit.playonyt("Mic Drop")
+
+    def weather(self, chunk, keywords):
+        locations = []
+        for word in chunk.subtrees(filter=lambda t: t.label() == 'GPE'):
+            for location in word:
+                locations.append(location[0])
+
+        for location in locations:
+            self.assistantResponse(self.weather_request.getWeather(location))
+
+
+    # Search in the tagged tree if the label WEATHER has been set
+    # in that case it checks the keywords and if match them it will
+    # call the weather API
+    def checkChunks(self, tagged_tree, ne_chunked_tree, label, pos_keywords):
+        for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
+            keywords = []
+            print(subtree)
+            for word in subtree:
+                if type(word) is tuple:
+                    if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
+                        keywords.append(word[0])
+            if not keywords:
+                print("no keywords found")
+            if keywords:
+                self.commands[label](subtree, keywords)
+
+
+
+    def parseInput(self, phrase):
+        clean_tagged = self.tokenize(phrase)
+        print(clean_tagged)
+        weather_chunked = self.__chunk(clean_tagged, weatherGrammar)
+        self.checkChunks(weather_chunked, self.ne_chunk(clean_tagged), 'WEATHER', ['NN', 'VBG'])
+        youtube_chunked = self.__chunk(clean_tagged, youtubeGrammar)
+        self.checkChunks(youtube_chunked, self.ne_chunk(clean_tagged), 'YOUTUBE', ['NN', 'NNP', 'VB'])
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
@@ -86,81 +127,19 @@ class Annie:
         lemma = WordNetLemmatizer()
         return [lemma.lemmatize(w) for w in tokens]
 
-    def __chunk(self, tokens):
-        grammar = "WEATHER: {<NN><IN>?<GPE>}"
+    def __chunk(self, tokens, grammar):
         cp = nltk.RegexpParser(grammar)
         return cp.parse(tokens)
 
-    def filt(self, x):
-        return x.label() == 'WEATHER'
+    def filt(self, x, chunk_word):
+        return x.label() == chunk_word
 
+    def ne_chunk(self, tagged):
+        return nltk.ne_chunk(tagged)
 
-    def tokenizeAndChunk(self, phrase):
+    def tokenize(self, phrase):
         tokens = nltk.word_tokenize(phrase)
         clean_tokens = self.__cleanInput(tokens)
         lemmatisation = self.__lemmatisation(clean_tokens)
         tagged = nltk.pos_tag(lemmatisation)  # las clasificamos por verbo, sustantivo...
-        # print(tagged)
-        test = nltk.ne_chunk(tagged)  # Comprueba si hay nombres propios, de ciudades...
-        test = self.__chunk(test)
-        for subtree in test.subtrees(filter=self.filt):  # Generate all subtrees
-            for word in subtree:
-                print(word)
-
-    def weather(self, city):
-        # complete url address 
-        complete_url = self.weatherUrl + "appid=" + self.weatherKey + "&q=" + city
-
-        # get method of requests module 
-        # return response object 
-        response = requests.get(complete_url)
-
-        # json method of response object  
-        # convert json format data into 
-        # python format data 
-        jsonResponse = response.json()
-
-        # Now x contains list of nested dictionaries 
-        # Check the value of "cod" key is equal to 
-        # "404", means city is found otherwise, 
-        # city is not found 
-        if jsonResponse["cod"] != "404":
-
-            # store the value of "main" 
-            # key in variable y 
-            weatherInfo = jsonResponse["main"]
-
-            # store the value corresponding 
-            # to the "temp" key of y 
-            current_temperature = weatherInfo["temp"]
-            current_temperature = int(current_temperature - 273.15)
-
-            # store the value corresponding 
-            # to the "pressure" key of y 
-            current_pressure = weatherInfo["pressure"]
-
-            # store the value corresponding 
-            # to the "humidity" key of y 
-            current_humidiy = weatherInfo["humidity"]
-
-            # store the value of "weather" 
-            # key in variable z 
-            descriptionDict = jsonResponse["weather"]
-
-            # store the value corresponding  
-            # to the "description" key at  
-            # the 0th index of z 
-            weather_description = descriptionDict[0]["description"]
-
-            # print following values 
-            self.assistantResponse(" Temperature is " +
-                                   str(current_temperature) +
-                                   "\n atmospheric pressure is " +
-                                   str(current_pressure) +
-                                   "\n humidity is " +
-                                   str(current_humidiy) +
-                                   "\n Today the weather is " +
-                                   str(weather_description))
-
-        else:
-            self.assistantResponse(" City Not Found ")
+        return tagged  # Comprueba si hay nombres propios, de ciudades...

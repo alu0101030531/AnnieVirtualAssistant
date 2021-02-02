@@ -1,0 +1,29 @@
+Asking about weather
+
+# Frases que contemplaremos para preguntar acerca del tiempo
+"How's the weather in XXXX"                 [("'s", 'POS'), ('weather', 'NN'), ('Mexico', 'NNP')]
+"What's the temperature in XXXX"            (S 's/POS (WEATHER temperature/NN (GPE Mexico/NNP)))
+"What's the weather like in XXXX"           [("'s", 'POS'), ('weather', 'NN'), ('like', 'IN'), ('Manchester', 'NNP')]
+"Is it raining in XXXX"                     [('raining', 'VBG'), ('Manchester', 'NN')]
+"Is it snowing in XXXX"                     [('snowing', 'VBG'), ('Manchester', 'NN')]
+
+# Palabras claves que deberemos comprobar
+"temperature" "raining" "weather" "localization" "snowing"
+
+Finding info in wikipedia
+
+"What is a XXX?"                            [('microphone', 'NN')]
+"Do you know what is XXX?"                  [('know', 'NN'), ("'s", 'POS'), ('table', 'NN')] || [('know', 'VB'), ('microphone', 'NN')]
+"What can you tell me about a? XXXX"        [('tell', 'VB'), ('microphone', 'NN')] || [('tell', 'NN'), ('table', 'NN')]
+"What XXX means"                            [('microphone', 'NN'), ('mean', 'NN')] || [('internet', 'NN'), ('mean', 'NN')]
+# Palabras clave a buscar
+"mean" "tell" "know" "Palabras a buscar"
+
+Play on Youtube
+
+"Play on Youtube XXXX"                      [('Play', 'NNP'), ('YouTube', 'NNP'), ('microphone', 'NN')] ||
+"Could you play on Youtube XXX"             [('could', 'MD'), ('play', 'VB'), ('YouTube', 'NNP'), ('sunny', 'JJ'), ('day', 'NN')]
+"Play XXXX on youtube"                      [('play', 'NN'), ('Checkers', 'NNS'), ('YouTube', 'VBP')]
+""
+# Palabras clave a buscar
+"Youtube" "Play" "nombre del vídeo"
