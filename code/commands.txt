@@ -27,3 +27,8 @@ Play on Youtube
 ""
 # Palabras clave a buscar
 "Youtube" "Play" "nombre del vídeo"
+
+Search on Google
+
+"Search XXXX"
+"Search XXXX in Google"
