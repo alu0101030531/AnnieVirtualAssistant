@@ -103,14 +103,17 @@ class Annie:
         pywhatkit.search(separator.join(toSearch))
 
     def wikipedia(selfself, chunk, keywords):
+        wikipedia.set_lang("en")
         print("Buscando en wikipedia")
         url = 'https://es.wikipedia.org/wiki/'
         toSearch = []
         for word in chunk:
             if word[0] not in commands_key_words["WIKIPEDIA"]:
                 toSearch.append(word[0])
-        page = wikipedia.page(toSearch)
-        web.open(url + page.title)
+        newsearch = " ".join(toSearch)
+        listofelements = wikipedia.search(newsearch)
+        page = wikipedia.page(listofelements[0]).url
+        web.open(page)
 
 
     def weather(self, chunk, keywords):
