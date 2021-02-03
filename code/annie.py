@@ -28,10 +28,11 @@ warnings.filterwarnings('ignore')
 
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
                       "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"],
-                      "LOCATION": ["location", "what"], "HOUR": ["hour"]}
+                      "LOCATION": ["location", "what"],
+                      "HOUR": ["hour"]}
 weatherGrammar = r"""
-    WEATHER: {<NN><IN>?<NNP>}
-             {<VBG><NNP>}
+    WEATHER: {<NN><IN>?<GPE>}
+             {<VBG><GPE>}
 """
 youtubeGrammar = r"""
     YOUTUBE: {<NN.*><NNP><.*>*}
@@ -76,7 +77,7 @@ class Annie:
     def recordAudio(self):
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            print('Say something')
+            self.assistantResponse('Say something')
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source)
         try:
@@ -165,6 +166,20 @@ class Annie:
     # in that case it checks the keywords and if match them it will
     # call the weather API
     def checkChunks(self, tagged_tree, ne_chunked_tree, label, pos_keywords):
+        for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
+            keywords = []
+            print(subtree)
+            for word in subtree:
+                print(word)
+                if type(word) is tuple:
+                    if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
+                        keywords.append(word[0])
+            if not keywords:
+                print("no keywords found")
+            if keywords:
+                self.commands[label](subtree, keywords)
+
+    def checkChunksLocation(self, tagged_tree, ne_chunked_tree, label, pos_keywords):
         for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
             keywords = []
             print(subtree)
