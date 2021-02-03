@@ -19,7 +19,6 @@ import pywhatkit
 # nltk.download('maxent_ne_chunker')
 # nltk.download('wordnet')
 from weather_request import WeatherRequest
-import input_manager as parser
 import webbrowser as web
 import requests
 from lxml import html
@@ -63,7 +62,6 @@ class Annie:
         self.foundCommand = False
         self.engine = pyttsx3.init()
         self.__setEngine()
-        self.parser = parser.InputManager()
         self.name = 'user'
         self.commands = {"WEATHER": self.weather, "YOUTUBE": self.youtube, "GOOGLE": self.google, "WIKIPEDIA": self.wikipedia, "LOCATION": self.location, "HOUR": self.hour}
         self.weather_request = WeatherRequest()
