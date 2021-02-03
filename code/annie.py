@@ -78,9 +78,9 @@ class Annie:
     def recordAudio(self):
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            self.assistantResponse('Say something')
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source)
+            self.assistantResponse('Say something')
         try:
             phrase = ''
             phrase = recognizer.recognize_google(audio, show_all=False)  # generate a list of possible transcriptions

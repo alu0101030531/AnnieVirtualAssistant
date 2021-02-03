@@ -12,5 +12,4 @@ class AnnieController:
     def play(self):
         phrase = self.annie.recordAudio()
         self.annie.assistantResponse(phrase)
-        print(phrase)
         self.annie.parseInput(phrase)
