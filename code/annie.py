@@ -28,10 +28,11 @@ warnings.filterwarnings('ignore')
 
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
                       "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"],
-                      "LOCATION": ["location", "what"], "HOUR": ["hour"]}
+                      "LOCATION": ["location", "what"],
+                      "HOUR": ["hour"]}
 weatherGrammar = r"""
-    WEATHER: {<NN><IN>?<NNP>}
-             {<VBG><NNP>}
+    WEATHER: {<NN><IN>?<GPE>+}
+             {<VBG><GPE>+}
 """
 youtubeGrammar = r"""
     YOUTUBE: {<NN.*><NNP><.*>*}
@@ -54,7 +55,7 @@ locationGrammar = r"""
 """
 
 hourGrammar = r"""
-    HOUR: {<NN><NNP>}
+    HOUR: {<NN><GPE>}
 """
 
 class Annie:
@@ -77,7 +78,7 @@ class Annie:
     def recordAudio(self):
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            print('Say something')
+            self.assistantResponse('Say something')
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source)
         try:
@@ -89,7 +90,7 @@ class Annie:
             print('I could not understand')
         except sr.RequestError as e:
             print('Request error from google speech recognition' + format(e))
-        return str(phrase)
+        return str(phrase.lower())
 
     # Play Annie response
     def assistantResponse(self, text):
@@ -139,22 +140,20 @@ class Annie:
         url = 'https://google.es/maps/place/' + finalLocationsString + '/&amp'
         web.open(url)
 
+    # Access the TimeZone API and request the hour in a location
     def hour(self, chunk, keywords):
-        country = []
-        for word in chunk:
-            if word[0] not in commands_key_words["HOUR"]:
-                country.append(word[0])
-        hourString = " ".join(country)
-        pageContent = requests.get(
-            'https://www.timeanddate.com/worldclock/' + hourString
+        country = ''
+        for word in chunk.subtrees(filter=lambda tagged: tagged.label() == 'GPE'):
+            for location in word:
+                country = location[0]
+        page_content = requests.get(
+            'https://www.timeanddate.com/worldclock/' + country
         )
-        tree = html.fromstring(pageContent.content)
+        tree = html.fromstring(page_content.content)
         variable = tree.xpath("/html/body/main/article/section[1]/div[1]/div/span[1]/text()")
-        print(variable)
-        variable = " ".join(variable)
-        variable.replace(':', ' ')
-        self.assistantResponse(variable)
+        self.assistantResponse(" ".join(variable).replace(':', ' '))
 
+    # Access weather API and request the weather for a location
     def weather(self, chunk, keywords):
         locations = []
         for word in chunk.subtrees(filter=lambda t: t.label() == 'GPE'):
@@ -169,27 +168,38 @@ class Annie:
     # in that case it checks the keywords and if match them it will
     # call the weather API
     def checkChunks(self, tagged_tree, ne_chunked_tree, label, pos_keywords):
-        for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
-            keywords = []
-            print(subtree)
-            for word in subtree:
-                print(word)
-                if type(word) is tuple:
-                    if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
-                        keywords.append(word[0])
-            if not keywords:
-                print("no keywords found")
-            if keywords:
-                if not self.foundCommand:
+        if not self.foundCommand:
+            for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
+                keywords = []
+                print(subtree)
+                for word in subtree:
+                    if type(word) is tuple:
+                        if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
+                            keywords.append(word[0])
+                if keywords:
                     self.commands[label](subtree, keywords)
                     self.foundCommand = True
+
+    def checkChunksLocation(self, tagged_tree, label, pos_keywords):
+        if not self.foundCommand:
+            for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
+                keywords = []
+                print(tagged_tree)
+                for word in subtree:
+                    if type(word) is tuple:
+                        if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
+                            keywords.append(word[0])
+                if keywords:
+                    self.commands[label](subtree, keywords)
+                    self.foundCommand = True
+
 
     def parseInput(self, phrase):
         self.foundCommand = False
         clean_tagged = self.tokenize(phrase)
         print(clean_tagged)
-        weather_chunked = self.__chunk(clean_tagged, weatherGrammar)
-        self.checkChunks(weather_chunked, self.ne_chunk(clean_tagged), 'WEATHER', ['NN', 'VBG'])
+        weather_chunked = self.__chunk(self.ne_chunk(clean_tagged), weatherGrammar)
+        self.checkChunksLocation(weather_chunked, 'WEATHER', ['NN', 'VBG'])
         youtube_chunked = self.__chunk(clean_tagged, youtubeGrammar)
         self.checkChunks(youtube_chunked, self.ne_chunk(clean_tagged), 'YOUTUBE', ['NN', 'NNP', 'VB'])
         google_chunked = self.__chunk(clean_tagged, googleGrammar)
@@ -198,8 +208,8 @@ class Annie:
         self.checkChunks(wiki_chunked, self.ne_chunk(clean_tagged), 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
         location_chunked = self.__chunk(clean_tagged, locationGrammar)
         self.checkChunks(location_chunked, self.ne_chunk(clean_tagged), 'LOCATION', ['NN', 'NNP'])
-        hour_chunked = self.__chunk(clean_tagged, hourGrammar)
-        self.checkChunks(hour_chunked, self.ne_chunk(clean_tagged), 'HOUR', ['NN'])
+        hour_chunked = self.__chunk(self.ne_chunk(clean_tagged), hourGrammar)
+        self.checkChunksLocation(hour_chunked, 'HOUR', ['NN'])
         if not self.foundCommand:
             if phrase == "are you okay" or phrase == "Annie are you okay":
                 self.assistantResponse("I've been hit by, I've been struck by, a smooth criminal")

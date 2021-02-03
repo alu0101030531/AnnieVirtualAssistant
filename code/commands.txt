@@ -29,9 +29,14 @@ Play on Youtube
 Search on Google
 
 "Search XXXX"
-"Search XXXX in Google"
+"Search XXXX in Google"                     [('search', 'NN'), ('Star', 'NNP'), ('Wars', 'NNP'), ('Google', 'NNP')]
 
 Search for Location
 
 "What is the location of XXXX"              [('location', 'NN'), ('Kuala', 'NNP'), ('Lumpur', 'NNP')]
 "What is the location of XXXX in YYYY"      [('location', 'NN'), ('Taco', 'NNP'), ('Tenerife', 'NNP')]
+
+Search for hour in a Country
+
+"What is the hour in XXXX"                  [('hour', 'NN'), ('France', 'NNP')]
+
