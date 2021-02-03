@@ -35,8 +35,8 @@ weatherGrammar = r"""
              {<VBG><GPE>+}
 """
 youtubeGrammar = r"""
-    YOUTUBE: {<NN.*><NNP><.*>*}
-             {<NN.*|VB.*><.*>*<VBP|NN>}
+    YOUTUBE: {<NN><ORGANIZATION><.*>*}
+             {<NN><.*>*<ORGANIZATION>}
              
 """
 
@@ -90,7 +90,7 @@ class Annie:
             print('I could not understand')
         except sr.RequestError as e:
             print('Request error from google speech recognition' + format(e))
-        return str(phrase.lower())
+        return str(phrase[0].lower() + phrase[1:])
 
     # Play Annie response
     def assistantResponse(self, text):
@@ -98,10 +98,10 @@ class Annie:
         self.engine.runAndWait()
 
     def youtube(self, chunk, keywords):
-        print("reproducimos video")
+        self.assistantResponse("Opening video on Youtube")
         video = []
         for word in chunk:
-            if word[0] not in commands_key_words["YOUTUBE"]:
+            if type(word) is tuple and word[0] not in commands_key_words["YOUTUBE"]:
                 video.append(word[0])
         separator = ' '
         pywhatkit.playonyt(separator.join(video))
@@ -167,7 +167,7 @@ class Annie:
     # Search in the tagged tree if the label WEATHER has been set
     # in that case it checks the keywords and if match them it will
     # call the weather API
-    def checkChunks(self, tagged_tree, ne_chunked_tree, label, pos_keywords):
+    def checkChunks(self, tagged_tree, label, pos_keywords):
         if not self.foundCommand:
             for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
                 keywords = []
@@ -176,40 +176,31 @@ class Annie:
                     if type(word) is tuple:
                         if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
                             keywords.append(word[0])
+                    else:
+                        for sub_chunk_word in word:
+                            if sub_chunk_word[1] in pos_keywords and sub_chunk_word[0].lower() in commands_key_words[label]:
+                                keywords.append(sub_chunk_word[0])
+
                 if keywords:
                     self.commands[label](subtree, keywords)
                     self.foundCommand = True
-
-    def checkChunksLocation(self, tagged_tree, label, pos_keywords):
-        if not self.foundCommand:
-            for subtree in tagged_tree.subtrees(filter=lambda t: t.label() == label):
-                keywords = []
-                print(tagged_tree)
-                for word in subtree:
-                    if type(word) is tuple:
-                        if word[1] in pos_keywords and word[0].lower() in commands_key_words[label]:
-                            keywords.append(word[0])
-                if keywords:
-                    self.commands[label](subtree, keywords)
-                    self.foundCommand = True
-
 
     def parseInput(self, phrase):
         self.foundCommand = False
         clean_tagged = self.tokenize(phrase)
         print(clean_tagged)
         weather_chunked = self.__chunk(self.ne_chunk(clean_tagged), weatherGrammar)
-        self.checkChunksLocation(weather_chunked, 'WEATHER', ['NN', 'VBG'])
-        youtube_chunked = self.__chunk(clean_tagged, youtubeGrammar)
-        self.checkChunks(youtube_chunked, self.ne_chunk(clean_tagged), 'YOUTUBE', ['NN', 'NNP', 'VB'])
+        self.checkChunks(weather_chunked, 'WEATHER', ['NN', 'VBG'])
+        youtube_chunked = self.__chunk(self.ne_chunk(clean_tagged), youtubeGrammar)
+        self.checkChunks(youtube_chunked, 'YOUTUBE', ['NN', 'NNP', 'VB'])
         google_chunked = self.__chunk(clean_tagged, googleGrammar)
-        self.checkChunks(google_chunked, self.ne_chunk(clean_tagged), 'GOOGLE', ['NN', 'NNP', 'NNP'])
+        self.checkChunks(google_chunked, 'GOOGLE', ['NN', 'NNP', 'NNP'])
         wiki_chunked = self.__chunk(clean_tagged, wikipediaGrammar)
-        self.checkChunks(wiki_chunked, self.ne_chunk(clean_tagged), 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
+        self.checkChunks(wiki_chunked, 'WIKIPEDIA', ['NN', 'NNP', 'VB'])
         location_chunked = self.__chunk(clean_tagged, locationGrammar)
-        self.checkChunks(location_chunked, self.ne_chunk(clean_tagged), 'LOCATION', ['NN', 'NNP'])
+        self.checkChunks(location_chunked, 'LOCATION', ['NN', 'NNP'])
         hour_chunked = self.__chunk(self.ne_chunk(clean_tagged), hourGrammar)
-        self.checkChunksLocation(hour_chunked, 'HOUR', ['NN'])
+        self.checkChunks(hour_chunked, 'HOUR', ['NN'])
         if not self.foundCommand:
             self.googleDefault(phrase)
 
