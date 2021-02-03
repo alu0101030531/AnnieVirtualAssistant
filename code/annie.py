@@ -34,8 +34,8 @@ weatherGrammar = r"""
              {<VBG><GPE>+}
 """
 youtubeGrammar = r"""
-    YOUTUBE: {<NN><ORGANIZATION><.*>*}
-             {<NN><.*>*<ORGANIZATION>}
+    YOUTUBE: {<NN><ORGANIZATION | NNP><.*>*}
+             {<NN><.*>*<ORGANIZATION | NNP>}
              
 """
 
@@ -190,7 +190,7 @@ class Annie:
         print(clean_tagged)
         weather_chunked = self.__chunk(self.ne_chunk(clean_tagged), weatherGrammar)
         self.checkChunks(weather_chunked, 'WEATHER', ['NN', 'VBG'])
-        youtube_chunked = self.__chunk(self.ne_chunk(clean_tagged), youtubeGrammar)
+        youtube_chunked = self.__chunk(clean_tagged, youtubeGrammar)
         self.checkChunks(youtube_chunked, 'YOUTUBE', ['NN', 'NNP', 'VB'])
         google_chunked = self.__chunk(clean_tagged, googleGrammar)
         self.checkChunks(google_chunked, 'GOOGLE', ['NN', 'NNP', 'NNP'])
@@ -201,7 +201,7 @@ class Annie:
         hour_chunked = self.__chunk(self.ne_chunk(clean_tagged), hourGrammar)
         self.checkChunks(hour_chunked, 'HOUR', ['NN'])
         if not self.foundCommand:
-            if phrase == "are you okay" or phrase == "Annie are you okay":
+            if phrase == "are you okay" or phrase == "annie are you okay":
                 self.assistantResponse("I've been hit by, I've been struck by, a smooth criminal")
             else:
                 self.googleDefault(phrase)
