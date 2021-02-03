@@ -22,16 +22,21 @@ Play on Youtube
 "Play on Youtube XXXX"                      [('Play', 'NNP'), ('YouTube', 'NNP'), ('microphone', 'NN')] ||
 "Could you play on Youtube XXX"             [('could', 'MD'), ('play', 'VB'), ('YouTube', 'NNP'), ('sunny', 'JJ'), ('day', 'NN')]
 "Play XXXX on youtube"                      [('play', 'NN'), ('Checkers', 'NNS'), ('YouTube', 'VBP')]
-""
+
 # Palabras clave a buscar
 "Youtube" "Play" "nombre del vídeo"
 
 Search on Google
 
 "Search XXXX"
-"Search XXXX in Google"
+"Search XXXX in Google"                     [('search', 'NN'), ('Star', 'NNP'), ('Wars', 'NNP'), ('Google', 'NNP')]
 
 Search for Location
 
 "What is the location of XXXX"              [('location', 'NN'), ('Kuala', 'NNP'), ('Lumpur', 'NNP')]
 "What is the location of XXXX in YYYY"      [('location', 'NN'), ('Taco', 'NNP'), ('Tenerife', 'NNP')]
+
+Search for hour in a Country
+
+"What is the hour in XXXX"                  [('hour', 'NN'), ('France', 'NNP')]
+

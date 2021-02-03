@@ -202,7 +202,10 @@ class Annie:
         hour_chunked = self.__chunk(self.ne_chunk(clean_tagged), hourGrammar)
         self.checkChunks(hour_chunked, 'HOUR', ['NN'])
         if not self.foundCommand:
-            self.googleDefault(phrase)
+            if phrase == "are you okay" or phrase == "Annie are you okay":
+                self.assistantResponse("I've been hit by, I've been struck by, a smooth criminal")
+            else:
+                self.googleDefault(phrase)
 
     # We remove the stopwords of the sentence
     def __cleanInput(self, tokens):
