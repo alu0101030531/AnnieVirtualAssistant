@@ -31,8 +31,8 @@ commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"
                       "LOCATION": ["location", "what"],
                       "HOUR": ["hour"]}
 weatherGrammar = r"""
-    WEATHER: {<NN><IN>?<GPE>*}
-             {<VBG><GPE>*}
+    WEATHER: {<NN><IN>?<GPE>+}
+             {<VBG><GPE>+}
 """
 youtubeGrammar = r"""
     YOUTUBE: {<NN.*><NNP><.*>*}
@@ -90,7 +90,7 @@ class Annie:
             print('I could not understand')
         except sr.RequestError as e:
             print('Request error from google speech recognition' + format(e))
-        return str(phrase)
+        return str(phrase.lower())
 
     # Play Annie response
     def assistantResponse(self, text):
@@ -140,18 +140,20 @@ class Annie:
         url = 'https://google.es/maps/place/' + finalLocationsString + '/&amp'
         web.open(url)
 
+    # Access the TimeZone API and request the hour in a location
     def hour(self, chunk, keywords):
         country = ''
         for word in chunk.subtrees(filter=lambda tagged: tagged.label() == 'GPE'):
             for location in word:
                 country = location[0]
-        pageContent = requests.get(
+        page_content = requests.get(
             'https://www.timeanddate.com/worldclock/' + country
         )
-        tree = html.fromstring(pageContent.content)
+        tree = html.fromstring(page_content.content)
         variable = tree.xpath("/html/body/main/article/section[1]/div[1]/div/span[1]/text()")
         self.assistantResponse(" ".join(variable).replace(':', ' '))
 
+    # Access weather API and request the weather for a location
     def weather(self, chunk, keywords):
         locations = []
         for word in chunk.subtrees(filter=lambda t: t.label() == 'GPE'):
