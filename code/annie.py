@@ -29,7 +29,7 @@ warnings.filterwarnings('ignore')
 commands_key_words = {"WEATHER": ["temperature", "raining", "weather", "snowing"], "YOUTUBE": ["play", "youtube"],
                       "GOOGLE": ["search", "google", "Google"], "WIKIPEDIA": ["look", "summarize", "for", "Wikipedia", "wikipedia"],
                       "LOCATION": ["location", "what"],
-                      "HOUR": ["hour"]}
+                      "HOUR": ["hour", "time"]}
 weatherGrammar = r"""
     WEATHER: {<NN><IN>?<GPE>+}
              {<VBG><GPE>+}
@@ -94,6 +94,7 @@ class Annie:
 
     # Play Annie response
     def assistantResponse(self, text):
+        print(text)
         self.engine.say(text)
         self.engine.runAndWait()
 
